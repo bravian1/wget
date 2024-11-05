@@ -27,6 +27,9 @@ func ReadUrlsFromFile(filePath string) ([]string, error) {
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
+	if len(urls) == 0 {
+		return nil, fmt.Errorf("no urls found in file")
+	}
 	fmt.Println(urls)
 	return urls, nil
 }

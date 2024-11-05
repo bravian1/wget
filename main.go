@@ -7,7 +7,10 @@ import (
 )
 
 func main() {
-	output, url, background, file, rateLimit, mirror, reject, exclude, convertLinks, path := utils.CheckFlags()
+	output, url, background, file, rateLimit, mirror, reject, exclude, convertLinks, path, err := utils.CheckFlags()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if mirror {
 		// Handle mirroring

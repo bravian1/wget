@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func CheckFlags() (output, url string, tolog bool, file string, rateLimit int64, mirror bool, reject, exclude []string, convertLinks bool, path string) {
+func CheckFlags() (output, url string, tolog bool, file string, rateLimit int64, mirror bool, reject, exclude []string, convertLinks bool, path string, err error) {
 	outputFile := flag.String("O", "", "Specify the output filename")
 	log := flag.Bool("B", false, "Run download in the background")
 	inputFile := flag.String("i", "", "Download multiple files from a list of URLs")
@@ -26,10 +26,26 @@ func CheckFlags() (output, url string, tolog bool, file string, rateLimit int64,
 
 	flag.Parse()
 
+	// Check for incompatible flag combinations when mirror flag is used
+	if *mirrorFlag {
+		if *outputFile != "" {
+			return "", "", false, "", 0, false, nil, nil, false, "", fmt.Errorf("cannot use -O flag with --mirror")
+		}
+		if *log {
+			return "", "", false, "", 0, false, nil, nil, false, "", fmt.Errorf("cannot use -B flag with --mirror")
+		}
+		if *inputFile != "" {
+			return "", "", false, "", 0, false, nil, nil, false, "", fmt.Errorf("cannot use -i flag with --mirror")
+		}
+		if *rateLimitFlag != "" {
+			return "", "", false, "", 0, false, nil, nil, false, "", fmt.Errorf("cannot use --rate-limit flag with --mirror")
+		}
+	}
+
 	if *inputFile == "" {
 		if flag.NArg() < 1 && !*mirrorFlag {
 			fmt.Println("Usage: go run . [-O filename] [-P path] [-B] [-i urlfile] [--rate-limit rate] [--mirror] [-R suffixes] [-X directories] [--convert-links] <URL>")
-			return
+			return "", "", false, "", 0, false, nil, nil, false, "", fmt.Errorf("missing URL argument")
 		}
 		if flag.NArg() > 0 {
 			url = flag.Arg(0)
@@ -53,7 +69,7 @@ func CheckFlags() (output, url string, tolog bool, file string, rateLimit int64,
 		*pathFlag = strings.Replace(*pathFlag, "~", home, 1)
 	}
 
-	return *outputFile, url, *log, *inputFile, limit, *mirrorFlag, reject, exclude, *convertLinksFlag, *pathFlag
+	return *outputFile, url, *log, *inputFile, limit, *mirrorFlag, reject, exclude, *convertLinksFlag, *pathFlag, nil
 }
 
 func removeEmptyStrings(s []string) []string {
